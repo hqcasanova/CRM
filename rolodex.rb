@@ -1,5 +1,7 @@
 ##########Container for all contacts. Contacts are considered distinctive if their emails are different.
-##########Thus, there may be multiple contact entries for a given individual since they have several emails.
+#Thus, there may be multiple contact entries for a given individual since they have several emails.
+#Notice thought that the use of a unique index allows the storage of multiple contacts with exactly the
+#same attributes (except, naturally, for the index itself)  
 class Rolodex
   def initialize
     @contacts = []
@@ -63,6 +65,7 @@ class Rolodex
     end
   end
 
+  #Display the value of a given attribute for all contacts
   def display_info_by_attribute(attr_code)
     @contacts.each do |contact|
       case attr_code
