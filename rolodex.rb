@@ -18,6 +18,10 @@ class Rolodex
     return @index == 1000
   end
 
+  def length
+    return @contacts.length
+  end
+
   #Searches for a certain contact according to email (assumed to be unique)
   #Returns the corresponding contact or false if not found
   def search_contact(email)
@@ -59,7 +63,19 @@ class Rolodex
     end
   end
 
-  def display_info_by_attribute
+  def display_info_by_attribute(attr_code)
+    @contacts.each do |contact|
+      case attr_code
+        when 0
+          puts "#{contact.first_name}\n"
+        when 1
+          puts "#{contact.last_name}\n"
+        when 2
+          puts "#{contact.email}\n"
+        when 3
+          puts "#{contact.notes}\n"
+      end 
+    end
   end
 
   #Deletes a given contact. Returns it afterwards.

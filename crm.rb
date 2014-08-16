@@ -13,7 +13,16 @@ class CRM
     "Delete a contact",
     "Exit"
   ]
-  @@update_ops = [
+  @@headings = [
+    "NEW CONTACT",
+    "MODIFY CONTACT",
+    "DISPLAY ALL CONTACTS",
+    "DISPLAY ONE CONTACT",
+    "DISPLAY AN ATTRIBUTE",
+    "DELETE A CONTACT",
+    "Thanks for using our software services."
+  ]
+  @@attr_ops = [
     "First name", 
     "Last name", 
     "Email", 
@@ -46,28 +55,44 @@ class CRM
     end
   end
 
+  #Only continue execution on pressing enter
+  def pause
+    print "Press Enter/Return to continue..."
+    gets
+  end
+
   #Main loop: displays the main menu and waits for the user's input before calling the corresponding option.
   #It also waits for input after the option has been executed, in case any results from the latter are displayed.
   def main_menu
     input = 0
-    until input == 6 
+    until input.to_i == @@main_ops.length - 1 
       print "\e[H\e[2J"  #clears the screen
       puts @name          
       print_menu(@@main_ops)
       print "Choose an option by entering a number: "
-      input = gets.chomp.to_i
+      input = gets.chomp
       call_option(input)
-      if input != 6
-        print "Press Enter/Return to continue..."
-        gets
-      end
     end
+  end
+
+  #Attributes menu: display the list of accepted attributes for a contact and prompts the user to select
+  #one. Includes sanitation logic, returning a valid code or false if invalid.
+  def attr_menu
+    print_menu(@@attr_ops)
+    print "Please select an attribute: "
+    attr_code = gets.chomp
+    if (/^[0-#{@@attr_ops.length - 1}]$/.match(attr_code))
+      attr_code = attr_code.to_i
+    else
+      attr_code = false
+      puts "Error: invalid attribute."
+    end
+    return attr_code
   end
 
   #Gathers the information needed for a new Rolodex contact
   #Returns the new contact 
   def add_contact
-    puts "NEW CONTACT"
     puts "Please provide the information specified below"
     print "First name: "
     first_name = gets.chomp
@@ -104,52 +129,53 @@ class CRM
   #Updates a user-chosen attribute of a contact identified by an email (also provided by the user).
   #Returns the updated contact or false if such update was unsuccessful.
   def modify_contact
-    puts "MODIFY CONTACT"
     contact = retrieve_contact_by_email
-
-    #Contact found => choose attribute
     if contact
-      print_menu(@@update_ops)
-      print "Which attribute would you want to modify? "
-      attr_code = gets.chomp.to_i
-
-      #Valid attribute code => confirm and update
-      if (attr_code < @@update_ops.length) && (attr_code >= 0)
-        print "You have chosen to change the contact's #{@@update_ops[attr_code]}. Is that correct? "
-        confirm = gets.chomp.downcase
-        if confirm == 'yes'
-          print "Please provide the new value for #{@@update_ops[attr_code]}: "
-          new_value = gets.chomp
-          contact = @rolodex.modify(contact, attr_code, new_value)
-          if contact
-            puts "Contact successfully updated:\n#{contact}\n"
+        attr_code = attr_menu
+        if attr_code
+          print "You have chosen to change the contact's #{@@attr_ops[attr_code]}. Is that correct? "
+          confirm = gets.chomp.downcase
+          if confirm == 'yes'
+            print "Please provide the new value for #{@@attr_ops[attr_code]}: "
+            new_value = gets.chomp
+            contact = @rolodex.modify(contact, attr_code, new_value)
+            if contact
+              puts "Contact successfully updated:\n#{contact}\n"
+            end
+          elsif confirm == 'no'
+            print "Update canceled. "
+          else
+            puts "Error: only 'yes' and 'no' are valid responses."
           end
-        elsif confirm == 'no'
-          print "Update canceled. "
-        else
-          puts "Error: only 'yes' and 'no' are valid responses."
         end
-      else
-        puts "Error: invalid attribute." 
-      end
     end 
     return contact
   end
 
   #Prints out all contacts with all their corresponding information
   def display_all_contacts
-    puts "DISPLAY ALL CONTACTS"
     @rolodex.display_all_contacts
+    puts "Number of contacts: #{@rolodex.length}"
   end
 
   #Displays the information stored for a contact with a certain user-provided email
   def display_one_contact
-    puts "DISPLAY ONE CONTACT"
     contact = retrieve_contact_by_email
   end
 
+  #Displays the value of a user-selected attribute across the database (Rolodex)
+  def display_attribute_across
+    unless @rolodex.is_empty?
+      attr_code = attr_menu
+      if attr_code
+        @rolodex.display_info_by_attribute(attr_code)
+      end
+    end
+    puts "Number of contacts: #{@rolodex.length}"
+  end
+
+  #Deletes a contact according to email
   def delete_contact
-    puts "DELETE A CONTACT"
     contact = retrieve_contact_by_email
     if contact
       if @rolodex.delete(contact)
@@ -158,25 +184,32 @@ class CRM
     end
   end  
 
-  #Option-action router
+  #Option-action router. Clears the screen, shows the option's title and executes the pertaining action.
   def call_option(input)
-    print "\e[H\e[2J"  #clears the screen
-    case input
-    when 0
-      add_contact
-    when 1
-      modify_contact
-    when 2
-      display_all_contacts
-    when 3
-      display_one_contact
-    when 4
-
-    when 5
-      delete_contact
-    when 6
-      puts "Thanks for using our software services."   
-    else     
+    if (/^[0-#{@@main_ops.length - 1}]$/.match(input))
+      print "\e[H\e[2J"
+      puts @@headings[input.to_i]
+      case input
+        when '0'
+          add_contact
+          pause
+        when '1'
+          modify_contact
+          pause
+        when '2'
+          display_all_contacts
+          pause
+        when '3'
+          display_one_contact
+          pause
+        when '4'
+          display_attribute_across
+          pause
+        when '5'
+          delete_contact
+          pause
+      end  
+    else      
       puts "Error: option #{input} not recognized."
     end
   end
@@ -184,6 +217,5 @@ end
 
 CRM.run("CUSTOMER RELATIONSHIP MANAGER")
 
-#Note: menus displayed using this class can be further generalized and "objectified". Also, 
-#instructions regarding display of messages have been allowed to be repeated for the sake of further
-#simplification of underlying classes and total separation between view and logic.
+#Note: menus displayed using this class can be further generalized and "objectified". This class should
+#probably be broken up into two separate ones: one for menus and one for actions, for example.
