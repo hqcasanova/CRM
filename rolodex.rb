@@ -1,3 +1,5 @@
+##########Container for all contacts. Contacts are considered distinctive if their emails are different.
+##########Thus, there may be multiple contact entries for a given individual since they have several emails.
 class Rolodex
   def initialize
     @contacts = []
@@ -12,7 +14,11 @@ class Rolodex
     @contacts[-1]
   end
 
-  #Searches for a certain contact according to email
+  def is_empty?
+    return @index == 1000
+  end
+
+  #Searches for a certain contact according to email (assumed to be unique)
   #Returns the corresponding contact or false if not found
   def search_contact(email)
     @contacts.each do |contact|
@@ -25,7 +31,7 @@ class Rolodex
 
   #Modifies the attribute, identified by 'attr_code', of a certain contact selected by email
   #Returns the modified contact object unless an error occurred, in which case false is returned instead.
-  def modify_contact(contact, attr_code, new_value)
+  def modify(contact, attr_code, new_value)
     case attr_code
     when 0
       contact.first_name = new_value
@@ -41,14 +47,24 @@ class Rolodex
     return contact
   end
 
+  #Displays all the contact's attributes followed by carriage return (for convenience, if part of a list)
+  def display_particular(contact)
+    puts "#{contact}\n"
+  end
 
+  #Traverses the data storage structure, displaying all of its items
   def display_all_contacts
-  
+    @contacts.each do |contact|
+      display_particular(contact) 
+    end
   end
-  def display_particular_contact
-  end
+
   def display_info_by_attribute
   end
-  def delete_contact
+
+  #Deletes a given contact. Returns it afterwards.
+  def delete(contact)
+    @contacts.delete(contact)
+    return contact
   end  
 end
